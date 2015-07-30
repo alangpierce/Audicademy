@@ -31,7 +31,17 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
     buttonManager.init(buttonInterface);
 
     var topics = topictree.topics;
+    _.each(topics, function(topic) {
+        topic.kind = "Topic";
+    });
+
+    var videos = topictree.videos;
+    _.each(videos, function(video) {
+        video.kind = "Video";
+    });
+
     var topicsById = _.object(_.pluck(topics, 'id'), topics);
+    var videosById = _.object(_.pluck(videos, 'id'), videos);
 
     async function topLevel() {
         // HACK: Wait 3 seconds for things to init.
@@ -64,22 +74,31 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         }
 
         var childIds = _.pluck(topic.childData, 'id');
-        var children = _.map(childIds, function(childId) {
-            return topicsById[childId];
+        var children = _.map(topic.childData, function(childIdentifier) {
+            if (childIdentifier.kind == "Topic") {
+                return topicsById[childIdentifier.id];
+            } else if (childIdentifier.kind == "Video") {
+                return videosById[childIdentifier.id];
+            } else {
+                console.log("Ignoring identifier " + childIdentifier.kind + ", " + childIdentifier.id +
+                    " because it is not a supported kind.");
+            }
         });
         children = _.compact(children);
 
-        var childTitles = _.pluck(children, 'title');
-        var normalizedTitles = _.map(childTitles, function(s){return normalizeTitle(s);});
+        var normalizedTitles = _.map(_.pluck(children, 'title'), normalizeTitle);
 
         var topicsByNormalizedTitle = _.object(normalizedTitles, children);
 
-        var childTitlesWithNumbers = _.map(childTitles, function(title, i) {
-            return "" + (i + 1) + ". " + title + ". ";
+        var formattedTitles = _.map(children, function(child, i) {
+            var result = "" + (i + 1) + ". ";
+            if (child.kind == "Video") {
+                result += "Video. ";
+            }
+            return result + child.title + ". ";
         });
 
-
-        var textToSpeak = "You are at topic " + topic.title + ". " + childTitlesWithNumbers.join("");
+        var textToSpeak = "You are at topic " + topic.title + ". " + formattedTitles.join("");
         var options = _.compact(normalizedTitles);
         var answer = await speakMenuAndWaitForInput(textToSpeak, options);
 
