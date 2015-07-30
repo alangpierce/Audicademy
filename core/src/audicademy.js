@@ -121,7 +121,46 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
     }
 
     async function presentVideo(video) {
+        var activeGrammarId = await speechInterface.prepareSpeechList("pause,back");
+        var pausedGrammarId = await speechInterface.prepareSpeechList("resume,back");
+        await syncSpeech("Playing video " + video.title);
         await speechInterface.playYoutubeVideo(video.youtubeId);
+
+        var isPaused = false;
+
+        while (true) {
+            if (isPaused) {
+                await buttonManager.waitForButtonDown();
+                await speechInterface.startListening(pausedGrammarId);
+                await buttonManager.waitForButtonUp();
+                var pausedResult = await speechInterface.stopListening();
+                if (pausedResult == "resume") {
+                    await speechInterface.resumeYoutubeVideo();
+                    isPaused = false;
+                } else if (pausedResult == "back") {
+                    await syncSpeech("Going back.");
+                    return;
+                } else {
+                    await syncSpeech("Sorry, I didn't understand that.");
+                }
+            } else {
+                await buttonManager.waitForButtonDown();
+                await speechInterface.pauseYoutubeVideo();
+                await speechInterface.startListening(activeGrammarId);
+                await buttonManager.waitForButtonUp();
+                var activeResult = await speechInterface.stopListening();
+                if (activeResult == "pause") {
+                    await syncSpeech("Pausing.");
+                    isPaused = true;
+                } else if (activeResult == "back") {
+                    await syncSpeech("Going back.");
+                    return;
+                } else {
+                    await syncSpeech("Sorry, I didn't understand that.");
+                    await speechInterface.resumeYoutubeVideo();
+                }
+            }
+        }
     }
 
     topLevel().catch(function(error) {

@@ -41,6 +41,7 @@ public class AudicademyActivity extends Activity {
 
     private TextToSpeech mTextToSpeech;
     private SpeechRecognizer mRecognizer;
+    private Track mTrack;
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
@@ -103,6 +104,7 @@ public class AudicademyActivity extends Activity {
             @Override
             public void onStart(String utteranceId) {
             }
+
             @Override
             public void onDone(String utteranceId) {
                 JsCallback<Void> callback = mUtteranceCompletionCallbacks.get(utteranceId);
@@ -112,10 +114,13 @@ public class AudicademyActivity extends Activity {
                     mCompletedUtterances.add(utteranceId);
                 }
             }
+
             @Override
             public void onError(String utteranceId) {
             }
         });
+
+        mTrack = new Track(this);
     }
 
     public class AudicademyInterface {
@@ -136,16 +141,21 @@ public class AudicademyActivity extends Activity {
             }
         }
 
-        public void playYoutubeVideo(String youtubeId, JsCallback<String> callback) {
-            String utteranceId = randomId();
-            mTextToSpeech.speak("Would play youtube video with ID " + youtubeId,
-                    TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+        public void playYoutubeVideo(String youtubeId, JsCallback<Void> callback) {
+            mTrack.setDataSourceString("file:///mnt/sdcard/KhanAcademyData/videos/" + youtubeId + ".mp3");
+            mTrack.prepare();
+            mTrack.start();
+            callback.respond(null);
+        }
 
-            Track track = new Track(AudicademyActivity.this);
-            track.setDataSourceString("file:///mnt/sdcard/KhanAcademyData/videos" + youtubeId + ".mp3");
-            track.prepare();
-            track.start();
-            callback.respond(utteranceId);
+        public void pauseYoutubeVideo(JsCallback<Void> callback) {
+            mTrack.pause();
+            callback.respond(null);
+        }
+
+        public void resumeYoutubeVideo(JsCallback<Void> callback) {
+            mTrack.start();
+            callback.respond(null);
         }
 
         public void prepareSpeechList(String optionList, JsCallback<String> callback) {

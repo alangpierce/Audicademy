@@ -379,7 +379,11 @@ public class Track {
         int sampleRate = oFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
         int channelCount = oFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         final String mime = oFormat.getString(MediaFormat.KEY_MIME);
-        mDuration = oFormat.getLong(MediaFormat.KEY_DURATION);
+        if (oFormat.containsKey(MediaFormat.KEY_DURATION)) {
+            mDuration = oFormat.getLong(MediaFormat.KEY_DURATION);
+        } else {
+            mDuration = 0;
+        }
 
         Log.v(TAG_TRACK, "Sample rate: " + sampleRate);
         Log.v(TAG_TRACK, "Mime type: " + mime);
