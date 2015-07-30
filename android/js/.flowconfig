@@ -1,6 +1,5 @@
 [ignore]
 .*/builder.*
-.*/node_modules.*
 
 [include]
 ../../core
