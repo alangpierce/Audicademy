@@ -49,6 +49,7 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         var grammarId = await speechInterface.prepareSpeechList(inputWords.join(","));
         await speechInterface.speak(text);
         await buttonManager.waitForButtonDown();
+        await speechInterface.stopSpeaking();
         await speechInterface.startListening(grammarId);
         await buttonManager.waitForButtonUp();
         return await speechInterface.stopListening();

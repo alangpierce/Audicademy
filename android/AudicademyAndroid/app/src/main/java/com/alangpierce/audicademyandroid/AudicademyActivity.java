@@ -123,6 +123,10 @@ public class AudicademyActivity extends Activity {
             mTextToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
             callback.respond(utteranceId);
         }
+        public void stopSpeaking(JsCallback<Void> callback) {
+            mTextToSpeech.stop();
+            callback.respond(null);
+        }
         public void waitForEndOfSpeech(String utteranceId, JsCallback<Void> callback) {
             if (mCompletedUtterances.contains(utteranceId)) {
                 callback.respond(null);
