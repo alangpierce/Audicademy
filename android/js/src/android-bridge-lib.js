@@ -1,4 +1,4 @@
-SAVED_CALLBACKS = {};
+var SAVED_CALLBACKS = {};
 
 function callbackForId(callbackId) {
     return SAVED_CALLBACKS[callbackId];
