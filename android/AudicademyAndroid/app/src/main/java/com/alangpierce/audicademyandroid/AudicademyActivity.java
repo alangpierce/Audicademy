@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -20,8 +21,12 @@ import android.widget.Button;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class AudicademyActivity extends Activity {
     private Random mRandom = new Random();
@@ -39,6 +44,9 @@ public class AudicademyActivity extends Activity {
     private volatile JsCallback<String> mSpeechCompletionCallback;
 
     private enum SpeechButtonState { DOWN, UP }
+
+    private Map<String, JsCallback<Void>> mUtteranceCompletionCallbacks = new HashMap<>();
+    private Set<String> mCompletedUtterances = new HashSet<>();
 
     private static final String DIGITS_SEARCH = "digits";
 
@@ -85,6 +93,24 @@ public class AudicademyActivity extends Activity {
                 return true;
             }
         });
+
+        mTextToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+            }
+            @Override
+            public void onDone(String utteranceId) {
+                JsCallback<Void> callback = mUtteranceCompletionCallbacks.get(utteranceId);
+                if (callback != null) {
+                    callback.respond(null);
+                } else {
+                    mCompletedUtterances.add(utteranceId);
+                }
+            }
+            @Override
+            public void onError(String utteranceId) {
+            }
+        });
     }
 
     public class AudicademyInterface {
@@ -92,6 +118,13 @@ public class AudicademyActivity extends Activity {
             String utteranceId = randomId();
             mTextToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
             callback.respond(utteranceId);
+        }
+        public void waitForEndOfSpeech(String utteranceId, JsCallback<Void> callback) {
+            if (mCompletedUtterances.contains(utteranceId)) {
+                callback.respond(null);
+            } else {
+                mUtteranceCompletionCallbacks.put(utteranceId, callback);
+            }
         }
         public void recognizeSpeech(JsCallback<String> callback) {
             mPendingSpeechCallback = callback;
