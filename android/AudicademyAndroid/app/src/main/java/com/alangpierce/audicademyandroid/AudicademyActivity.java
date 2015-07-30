@@ -2,7 +2,10 @@ package com.alangpierce.audicademyandroid;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.Decoder;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
@@ -21,8 +24,10 @@ import android.widget.Button;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
@@ -36,14 +41,14 @@ public class AudicademyActivity extends Activity {
     private TextToSpeech mTextToSpeech;
     private SpeechRecognizer mRecognizer;
 
+    // Grammar ID to use when the user presses the button next.
+    private volatile String nextGrammarId;
     // If not null, this callback is the next one to call when the user starts the next speech
     // action.
     private volatile JsCallback<String> mPendingSpeechCallback;
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
-
-    private enum SpeechButtonState { DOWN, UP }
 
     private Map<String, JsCallback<Void>> mUtteranceCompletionCallbacks = new HashMap<>();
     private Set<String> mCompletedUtterances = new HashSet<>();
@@ -79,7 +84,10 @@ public class AudicademyActivity extends Activity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        mRecognizer.startListening(DIGITS_SEARCH);
+                        if (nextGrammarId != null) {
+                            System.out.println("Starting grammar ID " + nextGrammarId);
+                            mRecognizer.startListening(nextGrammarId);
+                        }
                         System.out.println("Button down");
                         // Promote the callback.
                         mSpeechCompletionCallback = mPendingSpeechCallback;
@@ -131,6 +139,37 @@ public class AudicademyActivity extends Activity {
             // We have turned attention to a new action, so if the user is in the middle of speaking
             // right now, just ignore them when they finish.
             mSpeechCompletionCallback = null;
+        }
+
+        // optionList is a comma-separated list of options.
+        public void recognizeFromList(String optionList, JsCallback<String> callback) {
+            ImmutableList<String> options = ImmutableList.copyOf(optionList.split(","));
+            String grammarId = randomId();
+            setJsgfString(grammarId, jsgfFromOptionList(grammarId, options));
+
+            mPendingSpeechCallback = callback;
+            nextGrammarId = grammarId;
+            mSpeechCompletionCallback = null;
+        }
+    }
+
+    private String jsgfFromOptionList(String name, List<String> options) {
+        return String.format("#JSGF V1.0;\n" +
+                "\n" +
+                "grammar %s;\n" +
+                "\n" +
+                "public <result> = %s;\n",
+                name, Joiner.on(" | ").join(options));
+    }
+
+    private void setJsgfString(String name, String jsgfString) {
+        try {
+            Field decoderField = mRecognizer.getClass().getDeclaredField("decoder");
+            decoderField.setAccessible(true);
+            Decoder decoder = (Decoder) decoderField.get(mRecognizer);
+            decoder.setJsgfString(name, jsgfString);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -12,7 +12,7 @@ function topLevel(speechInterface: SpeechInterface) {
         await sleep(3000);
         while (true) {
             speechInterface.speak("Please say a number.");
-            var result = await speechInterface.recognizeSpeech();
+            var result = await speechInterface.recognizeFromList("math,science,humanities");
             var utteranceId = await speechInterface.speak("You said " + result);
             await speechInterface.waitForEndOfSpeech(utteranceId);
         }
