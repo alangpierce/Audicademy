@@ -55,6 +55,9 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         await speechInterface.waitForEndOfSpeech(utteranceId);
     }
 
+    /**
+     * Returns null if the response didn't match anything.
+     */
     async function speakMenuAndWaitForInput(text: string, inputWords: Array<string>) {
         var grammarId = await speechInterface.prepareSpeechList(inputWords.join(","));
         await speechInterface.speak(text);
@@ -100,7 +103,17 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
 
         var textToSpeak = "You are at topic " + topic.title + ". " + formattedTitles.join("");
         var options = _.compact(normalizedTitles);
-        var answer = await speakMenuAndWaitForInput(textToSpeak, options);
+
+        var answer = null;
+
+        while (true) {
+            answer = await speakMenuAndWaitForInput(textToSpeak, options);
+            if (answer == null) {
+                await syncSpeech("Sorry, I didn't understand that.")
+            } else {
+                break;
+            }
+        }
 
         var answerTopic = topicsByNormalizedTitle[answer];
 

@@ -28,7 +28,11 @@ public class AudicademyRecognitionListener implements RecognitionListener {
 
     @Override
     public void onResult(Hypothesis hypothesis) {
-        mHandler.handleResult(hypothesis.getHypstr());
+        if (hypothesis == null) {
+            mHandler.handleResult(null);
+        } else {
+            mHandler.handleResult(hypothesis.getHypstr());
+        }
     }
 
     @Override
