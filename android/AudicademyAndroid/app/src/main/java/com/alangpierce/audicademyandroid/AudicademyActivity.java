@@ -41,12 +41,6 @@ public class AudicademyActivity extends Activity {
     private TextToSpeech mTextToSpeech;
     private SpeechRecognizer mRecognizer;
 
-    // Grammar ID to use when the user presses the button next.
-    private volatile String nextGrammarId;
-    // If not null, this callback is the next one to call when the user starts the next speech
-    // action.
-    private volatile JsCallback<String> mPendingSpeechCallback;
-
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
 
@@ -84,18 +78,20 @@ public class AudicademyActivity extends Activity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        if (nextGrammarId != null) {
-                            System.out.println("Starting grammar ID " + nextGrammarId);
-                            mRecognizer.startListening(nextGrammarId);
-                        }
-                        System.out.println("Button down");
-                        // Promote the callback.
-                        mSpeechCompletionCallback = mPendingSpeechCallback;
-                        mPendingSpeechCallback = null;
+                        mWebView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mWebView.evaluateJavascript("handleSpeakButtonDown()", null);
+                            }
+                        });
                         break;
                     case MotionEvent.ACTION_UP:
-                        System.out.println("Button up");
-                        mRecognizer.stop();
+                        mWebView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mWebView.evaluateJavascript("handleSpeakButtonUp()", null);
+                            }
+                        });
                         break;
                 }
                 return true;
@@ -134,22 +130,19 @@ public class AudicademyActivity extends Activity {
                 mUtteranceCompletionCallbacks.put(utteranceId, callback);
             }
         }
-        public void recognizeSpeech(JsCallback<String> callback) {
-            mPendingSpeechCallback = callback;
-            // We have turned attention to a new action, so if the user is in the middle of speaking
-            // right now, just ignore them when they finish.
-            mSpeechCompletionCallback = null;
-        }
-
-        // optionList is a comma-separated list of options.
-        public void recognizeFromList(String optionList, JsCallback<String> callback) {
+        public void prepareSpeechList(String optionList, JsCallback<String> callback) {
             ImmutableList<String> options = ImmutableList.copyOf(optionList.split(","));
             String grammarId = randomId();
             setJsgfString(grammarId, jsgfFromOptionList(grammarId, options));
-
-            mPendingSpeechCallback = callback;
-            nextGrammarId = grammarId;
-            mSpeechCompletionCallback = null;
+            callback.respond(grammarId);
+        }
+        public void startListening(String grammarId, JsCallback<Void> callback) {
+            mRecognizer.startListening(grammarId);
+            callback.respond(null);
+        }
+        public void stopListening(JsCallback<String> callback) {
+            mSpeechCompletionCallback = callback;
+            mRecognizer.stop();
         }
     }
 

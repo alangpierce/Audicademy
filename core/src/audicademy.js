@@ -3,8 +3,9 @@
 var _ = require("underscore");
 var topictree = require("./topictree.js");
 var wordBlacklist = require("./word-blacklist.js");
+var buttonManager = require("./button-manager.js");
 
-function topLevel(speechInterface: SpeechInterface) {
+function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInterface) {
     function sleep(timeMs: number) {
         return new Promise(function(resolve, reject) {
             setTimeout(resolve, timeMs);
@@ -27,6 +28,8 @@ function topLevel(speechInterface: SpeechInterface) {
         return _.compact(resultWords).join(" ");
     }
 
+    buttonManager.init(buttonInterface);
+
     var topics = topictree.topics;
     var topicsById = _.object(_.pluck(topics, 'id'), topics);
 
@@ -40,6 +43,15 @@ function topLevel(speechInterface: SpeechInterface) {
     async function syncSpeech(text: string) {
         var utteranceId = await speechInterface.speak(text);
         await speechInterface.waitForEndOfSpeech(utteranceId);
+    }
+
+    async function speakMenuAndWaitForInput(text: string, inputWords: Array<string>) {
+        var grammarId = await speechInterface.prepareSpeechList(inputWords.join(","));
+        await speechInterface.speak(text);
+        await buttonManager.waitForButtonDown();
+        await speechInterface.startListening(grammarId);
+        await buttonManager.waitForButtonUp();
+        return await speechInterface.stopListening();
     }
 
     async function presentTopic(topicId: string) {
@@ -65,9 +77,10 @@ function topLevel(speechInterface: SpeechInterface) {
             return "" + (i + 1) + ". " + title + ". ";
         });
 
-        var answerPromise = speechInterface.recognizeFromList(_.compact(normalizedTitles).join(","));
-        await syncSpeech("You are at topic " + topic.title + ". " + childTitlesWithNumbers.join(""));
-        var answer = await answerPromise;
+
+        var textToSpeak = "You are at topic " + topic.title + ". " + childTitlesWithNumbers.join("");
+        var options = _.compact(normalizedTitles);
+        var answer = await speakMenuAndWaitForInput(textToSpeak, options);
 
         var answerTopic = topicsByNormalizedTitle[answer];
 
