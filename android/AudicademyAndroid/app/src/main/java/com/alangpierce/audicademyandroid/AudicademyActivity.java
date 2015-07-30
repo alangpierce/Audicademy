@@ -2,6 +2,7 @@ package com.alangpierce.audicademyandroid;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import com.falconware.prestissimo.Track;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import edu.cmu.pocketsphinx.Assets;
@@ -139,6 +140,11 @@ public class AudicademyActivity extends Activity {
             String utteranceId = randomId();
             mTextToSpeech.speak("Would play youtube video with ID " + youtubeId,
                     TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+
+            Track track = new Track(AudicademyActivity.this);
+            track.setDataSourceString("file:///mnt/sdcard/KhanAcademyData/videos" + youtubeId + ".mp3");
+            track.prepare();
+            track.start();
             callback.respond(utteranceId);
         }
 
