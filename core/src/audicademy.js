@@ -1,8 +1,8 @@
 /* @flow */
 
 var _ = require("underscore");
-var topictree = require("./topictree.js");
-var wordBlacklist = require("./word-blacklist.js");
+var topictree = require("./data/topictree.js");
+var wordBlacklist = require("./data/word-blacklist.js");
 var buttonManager = require("./button-manager.js");
 
 function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInterface) {
@@ -47,7 +47,8 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         // HACK: Wait 3 seconds for things to init.
         await sleep(3000);
         await syncSpeech("Welcome to Khan Academy!");
-        await presentTopic("x00000000");
+        //await presentTopic(topicsById["x00000000"]);
+        await presentVideo(videosById["x978a47a3"]);
     }
 
     async function syncSpeech(text: string) {
@@ -68,14 +69,7 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         return await speechInterface.stopListening();
     }
 
-    async function presentTopic(topicId: string) {
-        var topic = topicsById[topicId];
-
-        if (!topic) {
-            await syncSpeech("You reached a non-topic.");
-            return;
-        }
-
+    async function presentTopic(topic) {
         var childIds = _.pluck(topic.childData, 'id');
         var children = _.map(topic.childData, function(childIdentifier) {
             if (childIdentifier.kind == "Topic") {
@@ -91,7 +85,7 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
 
         var normalizedTitles = _.map(_.pluck(children, 'title'), normalizeTitle);
 
-        var topicsByNormalizedTitle = _.object(normalizedTitles, children);
+        var childrenByNormalizedTitle = _.object(normalizedTitles, children);
 
         var formattedTitles = _.map(children, function(child, i) {
             var result = "" + (i + 1) + ". ";
@@ -115,9 +109,19 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
             }
         }
 
-        var answerTopic = topicsByNormalizedTitle[answer];
+        var answerChild = childrenByNormalizedTitle[answer];
 
-        await presentTopic(answerTopic.id);
+        if (answerChild.kind == "Topic") {
+            await presentTopic(answerChild);
+        } else if (answerChild.kind == "Video") {
+            await presentVideo(answerChild);
+        } else {
+            console.log("Unexpected child kind: " + answerChild.kind);
+        }
+    }
+
+    async function presentVideo(video) {
+        await speechInterface.playYoutubeVideo(video.youtubeId);
     }
 
     topLevel().catch(function(error) {

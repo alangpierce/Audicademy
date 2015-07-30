@@ -134,6 +134,14 @@ public class AudicademyActivity extends Activity {
                 mUtteranceCompletionCallbacks.put(utteranceId, callback);
             }
         }
+
+        public void playYoutubeVideo(String youtubeId, JsCallback<String> callback) {
+            String utteranceId = randomId();
+            mTextToSpeech.speak("Would play youtube video with ID " + youtubeId,
+                    TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+            callback.respond(utteranceId);
+        }
+
         public void prepareSpeechList(String optionList, JsCallback<String> callback) {
             ImmutableList<String> options = ImmutableList.copyOf(optionList.split(","));
             String grammarId = randomId();
