@@ -1,5 +1,7 @@
-function topLevel(speechInterface) {
-    function sleep(timeMs) {
+/* @flow */
+
+function topLevel(speechInterface: SpeechInterface) {
+    function sleep(timeMs: number) {
         return new Promise(function(resolve, reject) {
             setTimeout(resolve, timeMs);
         });

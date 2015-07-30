@@ -1,0 +1,12 @@
+[ignore]
+.*/builder.*
+.*/node_modules.*
+
+[include]
+../../core
+
+[libs]
+interfaces
+../../core/interfaces
+
+[options]

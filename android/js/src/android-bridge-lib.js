@@ -1,10 +1,12 @@
+/* @flow */
+
 var SAVED_CALLBACKS = {};
 
-function callbackForId(callbackId) {
+function callbackForId(callbackId: string) {
     return SAVED_CALLBACKS[callbackId];
 }
 
-function defineWrapperMethod(handlerName, methodName) {
+function defineWrapperMethod(handlerName: string, methodName: string) {
     console.log("Defining wrapper " + handlerName + " method " + methodName);
     function randomId() {
         // http://stackoverflow.com/a/12502559/1154997
