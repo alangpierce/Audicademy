@@ -163,6 +163,7 @@ public class AudicademyActivity extends Activity {
     }
 
     private void setJsgfString(String name, String jsgfString) {
+        System.out.println("Writing jsgf file:\n" + jsgfString);
         try {
             Field decoderField = mRecognizer.getClass().getDeclaredField("decoder");
             decoderField.setAccessible(true);
