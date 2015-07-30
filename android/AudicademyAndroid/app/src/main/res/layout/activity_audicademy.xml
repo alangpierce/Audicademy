@@ -11,11 +11,18 @@
     <WebView
         android:id="@+id/web_view"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
 
-    <TextView
-        android:text="@string/hello_world"
+    <Button
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="600dp"
+        android:text="Speak"
+        android:id="@+id/speak_button"
+        android:layout_below="@+id/web_view"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        />
 
 </RelativeLayout>

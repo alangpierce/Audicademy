@@ -7,7 +7,6 @@ function callbackForId(callbackId: string) {
 }
 
 function defineWrapperMethod(handlerName: string, methodName: string) {
-    console.log("Defining wrapper " + handlerName + " method " + methodName);
     function randomId() {
         // http://stackoverflow.com/a/12502559/1154997
         return Math.random().toString(36).slice(2);

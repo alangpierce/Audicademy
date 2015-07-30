@@ -8,10 +8,11 @@ function topLevel(speechInterface: SpeechInterface) {
     }
 
     async function countToThree() {
-        for (var i = 1; i <= 3; i++) {
-            await speechInterface.speak("" + i);
-            await sleep(2000);
-        }
+        // Hack: Wait for initialization to finish.
+        await sleep(3000);
+        speechInterface.speak("Please say a number.");
+        var result = await speechInterface.recognizeSpeech();
+        speechInterface.speak("You said " + result);
     }
 
     countToThree().catch(function(error) {

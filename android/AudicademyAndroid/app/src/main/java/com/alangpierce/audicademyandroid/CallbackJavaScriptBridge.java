@@ -39,7 +39,6 @@ public class CallbackJavaScriptBridge {
     public class BridgeInterface {
         @JavascriptInterface
         public void callFunc(String funcName, String argJson) {
-            System.out.println("Ran callFunc with args " + funcName + " and " + argJson);
             mBridgeHandlers.get(funcName).handleFuncCall(argJson);
         }
     }

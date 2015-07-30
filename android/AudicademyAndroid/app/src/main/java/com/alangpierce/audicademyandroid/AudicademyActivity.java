@@ -2,24 +2,45 @@ package com.alangpierce.audicademyandroid;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.SpeechRecognizer;
+import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
+import android.widget.Button;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
 
 public class AudicademyActivity extends Activity {
     private Random mRandom = new Random();
     @Bind(R.id.web_view) WebView mWebView;
+    @Bind(R.id.speak_button) Button mSpeakButton;
 
     private TextToSpeech mTextToSpeech;
+    private SpeechRecognizer mRecognizer;
+
+    // If not null, this callback is the next one to call when the user starts the next speech
+    // action.
+    private volatile JsCallback<String> mPendingSpeechCallback;
+
+    // If not null, this callback is the the one to actually use when the user finishes speaking.
+    private volatile JsCallback<String> mSpeechCompletionCallback;
+
+    private enum SpeechButtonState { DOWN, UP }
+
+    private static final String DIGITS_SEARCH = "digits";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +63,90 @@ public class AudicademyActivity extends Activity {
                 mWebView.evaluateJavascript("runAudicademyTopLevel()", null);
             }
         });
+
+        initRecognizer();
+
+        mSpeakButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mRecognizer.startListening(DIGITS_SEARCH);
+                        System.out.println("Button down");
+                        // Promote the callback.
+                        mSpeechCompletionCallback = mPendingSpeechCallback;
+                        mPendingSpeechCallback = null;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        System.out.println("Button up");
+                        mRecognizer.stop();
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     public class AudicademyInterface {
-        public void toast(String message, JsCallback<Void> callback) {
-            Toast.makeText(AudicademyActivity.this, message, Toast.LENGTH_SHORT).show();
-            callback.respond(null);
-        }
-
         public void speak(String message, JsCallback<String> callback) {
             String utteranceId = randomId();
             mTextToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
             callback.respond(utteranceId);
-
         }
+        public void recognizeSpeech(JsCallback<String> callback) {
+            mPendingSpeechCallback = callback;
+            // We have turned attention to a new action, so if the user is in the middle of speaking
+            // right now, just ignore them when they finish.
+            mSpeechCompletionCallback = null;
+        }
+    }
+
+    private void initRecognizer() {
+        // Recognizer initialization is a time-consuming and it involves IO,
+        // so we execute it in async task
+        new AsyncTask<Void, Void, Exception>() {
+            @Override
+            protected Exception doInBackground(Void... params) {
+                try {
+                    Assets assets = new Assets(AudicademyActivity.this);
+                    File assetDir = assets.syncAssets();
+                    setupRecognizer(assetDir);
+                } catch (IOException e) {
+                    System.out.println("Error in setting up recognizer: " + e);
+                    return e;
+                }
+                return null;
+            }
+        }.execute();
+    }
+
+    private void setupRecognizer(File assetsDir) throws IOException {
+        System.out.println("Called setupRecognizer");
+
+        mRecognizer = SpeechRecognizerSetup.defaultSetup()
+                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
+                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
+                // To disable logging of raw audio comment out this call (takes a lot of space on the device)
+                .setRawLogDir(assetsDir)
+                // Threshold to tune for keyphrase to balance between false alarms and misses
+                .setKeywordThreshold(1e-45f)
+                // Use context-independent phonetic search, context-dependent is too slow for mobile
+                .setBoolean("-allphone_ci", true)
+                .getRecognizer();
+
+        mRecognizer.addListener(new AudicademyRecognitionListener(
+                new AudicademyRecognitionListener.ResultHandler() {
+            @Override
+            public void handleResult(String result) {
+                if (mSpeechCompletionCallback != null) {
+                    mSpeechCompletionCallback.respond(result);
+                }
+            }
+        }));
+
+        // Create grammar-based search for digit recognition
+        File digitsGrammar = new File(assetsDir, "digits.gram");
+        mRecognizer.addGrammarSearch(DIGITS_SEARCH, digitsGrammar);
     }
 
     private String randomId() {

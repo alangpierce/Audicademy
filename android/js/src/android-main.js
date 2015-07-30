@@ -4,8 +4,6 @@
 require("./android-bridge-lib.js");
 var audicademyTopLevel = require("../../../core/src/audicademy.js");
 
-console.log("Ran android-main");
-
 function runAudicademyTopLevel() {
     audicademyTopLevel(AudicademyInterface);
 }
