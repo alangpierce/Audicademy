@@ -38,7 +38,7 @@ function runAudicademyTopLevel() {
         }
     };
 
-    audicademyTopLevel(AudicademyInterface, buttonInterface);
+    audicademyTopLevel(AudicademyInterface, contentInterface, buttonInterface);
 }
 
 window.runAudicademyTopLevel = runAudicademyTopLevel;

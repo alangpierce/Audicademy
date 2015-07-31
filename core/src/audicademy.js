@@ -11,8 +11,9 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         await sleep(3000);
         await syncSpeech("Welcome to Khan Academy!");
         await presentTopic(topicsById["x00000000"]);
-        //await presentVideo(videosById["x978a47a3"]);
-        //await presentArticle(articlesById["x3d0bb45f"]);
+        //await presentTopic(topicsById["x20488a2b"]);
+        //await presentVideo(videosById["878129397"]);
+        //await presentArticle(articlesById["x64ef5293"]);
         //await presentSampleExercise();
     }
 
@@ -77,23 +78,21 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     }
 
     async function presentTopic(topic) {
-        var childIds = _.pluck(topic.childData, 'id');
         var children = _.map(topic.childData, function(childIdentifier) {
             if (childIdentifier.kind == "Topic") {
                 return topicsById[childIdentifier.id];
             } else if (childIdentifier.kind == "Video") {
                 return videosById[childIdentifier.id];
+            } else if (childIdentifier.kind == "Article") {
+                return articlesById[childIdentifier.id];
             } else {
                 console.log("Ignoring identifier " + childIdentifier.kind + ", " + childIdentifier.id +
                     " because it is not a supported kind.");
             }
         });
         children = _.compact(children);
-
         var normalizedTitles = _.map(_.pluck(children, 'title'), normalizeTitle);
-
         var childrenByNormalizedTitle = _.object(normalizedTitles, children);
-
         var formattedTitles = _.map(children, function(child, i) {
             var result = "" + (i + 1) + ". ";
             if (child.kind == "Video") {
@@ -106,28 +105,33 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
 
         var textToSpeak = "You are at topic " + topic.title + ". " + formattedTitles.join("");
         var options = _.compact(normalizedTitles);
-
-        var answer = null;
+        options.push("back");
 
         while (true) {
+            var answer = null;
+
             answer = await speakMenuAndWaitForInput(textToSpeak, options);
             if (answer == null) {
-                await syncSpeech("Sorry, I didn't understand that.")
-            } else {
+                await syncSpeech("Sorry, I didn't understand that.");
+                continue;
+            }
+
+            if (answer == "back") {
+                await syncSpeech("Going back.");
                 break;
             }
-        }
 
-        var answerChild = childrenByNormalizedTitle[answer];
+            var answerChild = childrenByNormalizedTitle[answer];
 
-        if (answerChild.kind == "Topic") {
-            await presentTopic(answerChild);
-        } else if (answerChild.kind == "Video") {
-            await presentVideo(answerChild);
-        } else if (answerChild.kind == "Article") {
-            await presentArticle(answerChild);
-        } else {
-            console.log("Unexpected child kind: " + answerChild.kind);
+            if (answerChild.kind == "Topic") {
+                await presentTopic(answerChild);
+            } else if (answerChild.kind == "Video") {
+                await presentVideo(answerChild);
+            } else if (answerChild.kind == "Article") {
+                await presentArticle(answerChild);
+            } else {
+                console.log("Unexpected child kind: " + answerChild.kind);
+            }
         }
     }
 

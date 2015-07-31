@@ -142,7 +142,8 @@ public class AudicademyActivity extends Activity {
         }
 
         public void playYoutubeVideo(String youtubeId, JsCallback<Void> callback) {
-            mTrack.setDataSourceString("file:///mnt/sdcard/KhanAcademyData/videos/" + youtubeId + ".mp3");
+            mTrack.setDataSourceString(
+                    "file:///sdcard/KhanAcademyData/videos/" + youtubeId + "/" + youtubeId + ".ts");
             mTrack.prepare();
             mTrack.start();
             callback.respond(null);
