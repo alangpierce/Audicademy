@@ -6,6 +6,16 @@ var wordBlacklist = require("./data/word-blacklist.js");
 var buttonManager = require("./button-manager.js");
 
 function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInterface) {
+    async function topLevel() {
+        // HACK: Wait 3 seconds for things to init.
+        await sleep(3000);
+        await syncSpeech("Welcome to Khan Academy!");
+        //await presentTopic(topicsById["x00000000"]);
+        //await presentVideo(videosById["x978a47a3"]);
+        //await presentArticle(articlesById["x3d0bb45f"]);
+        await presentSampleExercise();
+    }
+
     function sleep(timeMs: number) {
         return new Promise(function(resolve, reject) {
             setTimeout(resolve, timeMs);
@@ -48,15 +58,6 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
     });
     var articlesById = _.object(_.pluck(articles, 'id'), articles);
 
-    async function topLevel() {
-        // HACK: Wait 3 seconds for things to init.
-        await sleep(3000);
-        await syncSpeech("Welcome to Khan Academy!");
-        //await presentTopic(topicsById["x00000000"]);
-        //await presentVideo(videosById["x978a47a3"]);
-        await presentArticle(articlesById["x3d0bb45f"]);
-    }
-
     async function syncSpeech(text: string) {
         var utteranceId = await speechInterface.speak(text);
         await speechInterface.waitForEndOfSpeech(utteranceId);
@@ -69,8 +70,8 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
         var grammarId = await speechInterface.prepareSpeechList(inputWords.join(","));
         await speechInterface.speak(text);
         await buttonManager.waitForButtonDown();
-        await speechInterface.stopSpeaking();
         await speechInterface.startListening(grammarId);
+        await speechInterface.stopSpeaking();
         await buttonManager.waitForButtonUp();
         return await speechInterface.stopListening();
     }
@@ -263,6 +264,60 @@ function topLevel(speechInterface: SpeechInterface, buttonInterface: ButtonInter
                     await syncSpeech("Sorry, I didn't understand that.");
                     sendEvent("resume");
                 }
+            }
+        }
+    }
+
+    async function presentSampleExercise() {
+        var numCorrectLeft = 5;
+        while (numCorrectLeft > 0) {
+            await syncSpeech("" + numCorrectLeft + " problems left.");
+            var result = await sampleProblem();
+            if (result == "back") {
+                return;
+            } else if (result == "correct") {
+                numCorrectLeft--;
+            } else {
+                numCorrectLeft = 5;
+            }
+        }
+        await syncSpeech("Congratulations, you got five in a row!");
+    }
+
+    // Returns "back", "correct", or "incorrect".
+    async function sampleProblem() {
+        var value1 = Math.floor(Math.random() * 8 + 2);
+        var value2 = Math.floor(Math.random() * 8 + 2);
+
+        var question = "What is " + value1 + " plus " + value2 + "?";
+        var choices = _.range(0, 21);
+        choices.push("back");
+        while (true) {
+            var result = await speakMenuAndWaitForInput(question, choices);
+            if (result == null) {
+                syncSpeech("Sorry, I didn't understand that.");
+                continue;
+            }
+            if (result == "back") {
+                syncSpeech("Going back.");
+                return "back";
+            }
+            await syncSpeech("Checking answer " + result);
+            var buttonPromise = buttonManager.waitForButtonDown().then(function(){ return "pressed"; });
+            var sleepPromise = sleep(1500);
+            var pauseResult = await Promise.race([sleepPromise, buttonPromise]);
+            if (pauseResult == "pressed") {
+                await buttonManager.waitForButtonUp();
+                await syncSpeech("Ok, I'll forget about that answer.");
+                continue;
+            }
+
+            if (parseInt(result) == value1 + value2) {
+                await syncSpeech("" + result + " is correct!");
+                return "correct";
+            } else {
+                await syncSpeech("Sorry, " + result + " is incorrect.");
+                return "incorrect";
             }
         }
     }
