@@ -4,6 +4,7 @@
  */
 'use strict';
 
+var Button = require('react-native-button');
 var React = require('react-native');
 var {
     AppRegistry,
@@ -13,20 +14,23 @@ var {
     } = React;
 
 var AudicademyIos = React.createClass({
+    handleButtonDown: function() {
+        console.log("Button down");
+    },
+
+    handleButtonUp: function() {
+        console.log("Button up");
+    },
+
     render: function () {
         console.log("Called render.");
         return (
             <View style={styles.container}>
-                <Text style={styles.welcome}>
-                    Welcome to React Native!
-                </Text>
-                <Text style={styles.instructions}>
-                    To get started, edit index.ios.js
-                </Text>
-                <Text style={styles.instructions}>
-                    Press Cmd+R to reload,{'\n'}
-                    Cmd+D or shake for dev menu
-                </Text>
+                <Button style={styles.button}
+                        onPressIn={this.handleButtonDown}
+                        onPressOut={this.handleButtonUp}>
+                    Speak
+                </Button>
             </View>
         );
     }
@@ -39,15 +43,16 @@ var styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F5FCFF',
     },
-    welcome: {
+    button: {
+        borderWidth: 1,
         fontSize: 20,
-        textAlign: 'center',
-        margin: 10,
-    },
-    instructions: {
-        textAlign: 'center',
-        color: '#333333',
-        marginBottom: 5,
+        width: 250,
+        height: 400,
+        backgroundColor: '#CCCCCC',
+        paddingTop: 175,
+        borderRadius: 16,
+        overflow: 'hidden',
+        position: 'relative',
     },
 });
 
