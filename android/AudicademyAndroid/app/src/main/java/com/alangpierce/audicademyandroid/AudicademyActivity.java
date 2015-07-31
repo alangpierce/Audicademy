@@ -11,6 +11,7 @@ import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 import android.app.Activity;
+import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -42,6 +43,7 @@ public class AudicademyActivity extends Activity {
     private TextToSpeech mTextToSpeech;
     private SpeechRecognizer mRecognizer;
     private Track mTrack;
+    private MediaRecorder mMediaRecorder;
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
@@ -121,6 +123,8 @@ public class AudicademyActivity extends Activity {
         });
 
         mTrack = new Track(this);
+
+        mMediaRecorder = new MediaRecorder();
     }
 
     public class AudicademyInterface {
@@ -142,6 +146,7 @@ public class AudicademyActivity extends Activity {
         }
 
         public void playYoutubeVideo(String youtubeId, JsCallback<Void> callback) {
+            mTrack = new Track(AudicademyActivity.this);
             mTrack.setDataSourceString(
                     "file:///sdcard/KhanAcademyData/videos/" + youtubeId + "/" + youtubeId + ".ts");
             mTrack.prepare();
@@ -153,7 +158,6 @@ public class AudicademyActivity extends Activity {
             mTrack.pause();
             callback.respond(null);
         }
-
         public void resumeYoutubeVideo(JsCallback<Void> callback) {
             mTrack.start();
             callback.respond(null);
@@ -173,6 +177,42 @@ public class AudicademyActivity extends Activity {
             mSpeechCompletionCallback = callback;
             mRecognizer.stop();
         }
+
+        // Starts recording the user's voice.
+        public void recordUserVoice(JsCallback<String> callback) {
+            String noteId = randomId();
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mMediaRecorder.setOutputFile(pathForNoteFile(noteId));
+            try {
+                mMediaRecorder.prepare();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            mMediaRecorder.start();
+            callback.respond(noteId);
+        }
+        public void stopRecordingUserVoice(JsCallback<Void> callback) {
+            mMediaRecorder.stop();
+            callback.respond(null);
+        }
+        public void playBackUserVoice(String noteId, JsCallback<Void> callback) {
+            mTrack = new Track(AudicademyActivity.this);
+            mTrack.setDataSourceString(pathForNoteFile(noteId));
+            mTrack.prepare();
+            mTrack.start();
+            callback.respond(null);
+        }
+        public void stopUserVoice(JsCallback<Void> callback) {
+            mTrack.stop();
+            callback.respond(null);
+        }
+    }
+
+    private String pathForNoteFile(String noteId) {
+        return "/sdcard/temp/KhanAcademyNote" + noteId + ".3gpp";
     }
 
     private String jsgfFromOptionList(String name, List<String> options) {
@@ -242,6 +282,8 @@ public class AudicademyActivity extends Activity {
         // Create grammar-based search for digit recognition
         File digitsGrammar = new File(assetsDir, "digits.gram");
         mRecognizer.addGrammarSearch(DIGITS_SEARCH, digitsGrammar);
+        File quadraticFormulaGrammar = new File(assetsDir, "quadratic_formula_grammar.gram");
+        mRecognizer.addGrammarSearch("quadratic_formula_grammar", quadraticFormulaGrammar);
     }
 
     private String randomId() {

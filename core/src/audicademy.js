@@ -340,7 +340,72 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     }
 
     async function presentAdvancedExercise() {
-        await syncSpeech("The advanced exercise is under construction.");
+        await syncSpeech("Starting the advanced exercise.");
+
+        var options = ["back", "repeat the question", "i have an answer"];
+        for (var i = 1; i <= 10; i++) {
+            options.push("record note " + i);
+            options.push("play note " + i);
+        }
+
+        var grammarId = await speechInterface.prepareSpeechList(options.join(","));
+
+        var problemText = 'Find all solutions to the following equation. x squared plus five x minus 2 equals 2 x ' +
+            'squared minus 5. Say your answer like "one plus or minus the square root of two over three". When you ' +
+            'have an answer, say "I have an answer".';
+
+        // x^2 + 5x - 2 = 2x^2 - 5
+        await syncSpeech(problemText);
+
+        var noteIds = {};
+
+        while (true) {
+            // Answer: x = (5 \pm sqrt(13)) / (4)
+            await buttonManager.waitForButtonDown();
+            await speechInterface.startListening(grammarId);
+            await speechInterface.stopSpeaking();
+            await buttonManager.waitForButtonUp();
+            var answer = await speechInterface.stopListening();
+
+            if (answer == null) {
+                await syncSpeech("Sorry, I didn't understand that.");
+            } else if (answer == "back") {
+                await syncSpeech("Going back.");
+                return;
+            } else if (answer == "repeat the question") {
+                await syncSpeech(problemText);
+            } else if (answer.startsWith("record note")) {
+                var noteNumStr = answer.split(" ")[2];
+                speechInterface.speak("Recording note " + noteNumStr + ".");
+                await buttonManager.waitForButtonDown();
+                var noteId = await speechInterface.recordUserVoice();
+                await buttonManager.waitForButtonUp();
+                speechInterface.stopRecordingUserVoice();
+                noteIds[noteNumStr] = noteId;
+                await syncSpeech("Saved.");
+            } else if (answer.startsWith("play note")) {
+                var noteNumStr = answer.split(" ")[2];
+                if (noteIds[noteNumStr]) {
+                    speechInterface.playBackUserVoice(noteIds[noteNumStr]);
+                } else {
+                    await syncSpeech("I don't have anything for note " + noteNumStr + ".");
+                }
+            } else if (answer == "i have an answer") {
+                await syncSpeech("Ok, what is your answer?");
+                await buttonManager.waitForButtonDown();
+                await speechInterface.startListening("quadratic_formula_grammar");
+                await speechInterface.stopSpeaking();
+                await buttonManager.waitForButtonUp();
+                var finalAnswer = await speechInterface.stopListening();
+                await syncSpeech("Your answer was " + finalAnswer);
+
+                if (finalAnswer == "5 plus or minus the square root of 13 over 4") {
+                    await syncSpeech("That answer is correct.");
+                } else {
+                    await syncSpeech("That answer is incorrect.");
+                }
+            }
+        }
     }
 
     topLevel().catch(function(error) {

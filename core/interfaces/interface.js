@@ -11,6 +11,12 @@ declare class SpeechInterface {
     prepareSpeechList(stringList: string): Promise<string>;
     startListening(grammarId: string): Promise<void>;
     stopListening(): Promise<string>;
+
+    // Returns a note ID.
+    recordUserVoice(): Promise<string>;
+    stopRecordingUserVoice(): Promise<void>;
+    playBackUserVoice(noteId: string): Promise<void>;
+    stopUserVoice(): Promise<void>;
 }
 
 
