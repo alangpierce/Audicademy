@@ -5,11 +5,17 @@ declare class SpeechInterface {
     stopSpeaking(): Promise<void>;
 
     playYoutubeVideo(youtubeId: string): Promise<string>;
+    loadArticle(articleId: string): Promise<string>;
 
-    // Returns a grammard ID. Takes a comma-separate list.
+    // Returns a grammar ID. Takes a comma-separate list.
     prepareSpeechList(stringList: string): Promise<string>;
     startListening(grammarId: string): Promise<void>;
     stopListening(): Promise<string>;
+}
+
+
+declare class ContentInterface {
+    loadArticle(articleId: string) => Promise<string>;
 }
 
 

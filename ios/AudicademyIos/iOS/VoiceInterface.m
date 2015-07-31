@@ -33,7 +33,7 @@ RCT_EXPORT_METHOD(initialize) {
 //	}
 
 
-	
+
 //	[[OEPocketsphinxController sharedInstance] setActive:TRUE error:nil];
 //	[[OEPocketsphinxController sharedInstance]
 //			startListeningWithLanguageModelAtPath:lmPath

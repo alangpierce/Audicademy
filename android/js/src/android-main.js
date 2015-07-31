@@ -9,7 +9,26 @@ var audicademyTopLevel = require("../../../core/src/audicademy.js");
 var buttonDownHandlers = [];
 var buttonUpHandlers = [];
 
+
+// Object mapping from article ID to callback for that article.
+var articleResponseHandlers = {};
+
+
 function runAudicademyTopLevel() {
+    var contentInterface = {
+        loadArticle: function(articleId) {
+            return new Promise(function(resolve, reject) {
+                if (!articleResponseHandlers[articleId]) {
+                    articleResponseHandlers[articleId] = [];
+                }
+                articleResponseHandlers[articleId].push(resolve);
+
+                var script = document.createElement('script');
+                script.src = 'file:///sdcard/KhanAcademyData/articles/' + articleId + '.js';
+                document.head.appendChild(script);
+            });
+        }
+    };
     var buttonInterface = {
         registerButtonDownHandler: function(callback) {
             buttonDownHandlers.push(callback);
@@ -34,3 +53,13 @@ window.handleSpeakButtonUp = function () {
         handler();
     });
 };
+
+window.KhanAcademyRegisterArticle = function(articleId, articleText) {
+    var handlers = articleResponseHandlers[articleId];
+    articleResponseHandlers[articleId] = null;
+    if (handlers) {
+        _.each(handlers, function(handler) {
+            handler(articleText);
+        })
+    }
+}
