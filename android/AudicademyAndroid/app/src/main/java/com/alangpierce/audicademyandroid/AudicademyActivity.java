@@ -136,7 +136,11 @@ public class AudicademyActivity extends Activity {
     public class AudicademyInterface {
         public void speak(String message, JsCallback<String> callback) {
             String utteranceId = randomId();
-            mTextToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+
+            Bundle paramsBundle = new Bundle();
+            paramsBundle.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 0.3f);
+
+            mTextToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, paramsBundle, utteranceId);
             callback.respond(utteranceId);
         }
         public void stopSpeaking(JsCallback<Void> callback) {

@@ -90,6 +90,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                     " because it is not a supported kind.");
             }
         });
+        console.log("Got to children");
         children = _.compact(children);
         var normalizedTitles = _.map(_.pluck(children, 'title'), normalizeTitle);
         var childrenByNormalizedTitle = _.object(normalizedTitles, children);
@@ -113,6 +114,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         }
 
         while (true) {
+            console.log("Start of loop");
             var answer = null;
 
             answer = await speakMenuAndWaitForInput(textToSpeak, options);
@@ -295,7 +297,11 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         await syncSpeech("Starting the simple exercise.");
         var numCorrectLeft = 5;
         while (numCorrectLeft > 0) {
-            await syncSpeech("" + numCorrectLeft + " problems left.");
+            if (numCorrectLeft == 1) {
+                await syncSpeech("" + numCorrectLeft + " problem left.");
+            } else {
+                await syncSpeech("" + numCorrectLeft + " problems left.");
+            }
             var result = await simpleProblem();
             if (result == "back") {
                 return;
@@ -349,7 +355,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     async function presentAdvancedExercise() {
         await syncSpeech("Starting the advanced exercise.");
 
-        var options = ["back", "repeat the question", "i have an answer"];
+        var options = ["back", "repeat the question", "say the equation again", "i have an answer"];
         for (var i = 1; i <= 10; i++) {
             options.push("record note " + i);
             options.push("play note " + i);
@@ -357,11 +363,18 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
 
         var grammarId = await speechInterface.prepareSpeechList(options.join(","));
 
-        var problemText = 'Find all solutions to the following equation. x squared plus five x minus 2 equals 2 x ' +
-            'squared minus 5. Say your answer like "one plus or minus the square root of two over three". When you ' +
+        var equation = "x squared plus five x minus 3 equals 2 x squared";
+
+        var problemText = 'Find all solutions to the following equation. ' + equation +
+            '. Say your answer like "one plus or minus the square root of two over three". When you ' +
             'have an answer, say "I have an answer".';
 
-        // x^2 + 5x - 2 = 2x^2 - 5
+        // x^2 + 5x - 3 = 2x^2
+        // -x^2 + 5x - 3 = 0
+        // x^2 + -5x + 3 = 0
+        // x = (5 plus/minus sqrt(25 - 4*1*3)) / (2)
+        // x = (5 plus/minus sqrt(25 - 12)) / (2)
+        // x = (5 plus/minus sqrt(13)) / (2)
         await syncSpeech(problemText);
 
         var noteIds = {};
@@ -379,8 +392,8 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
             } else if (answer == "back") {
                 await syncSpeech("Going back.");
                 return;
-            } else if (answer == "repeat the question") {
-                await syncSpeech(problemText);
+            } else if (answer == "repeat the question" || answer == "say the equation again") {
+                await syncSpeech(equation);
             } else if (answer.startsWith("record note")) {
                 var noteNumStr = answer.split(" ")[2];
                 speechInterface.speak("Recording note " + noteNumStr + ".");
@@ -406,7 +419,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 var finalAnswer = await speechInterface.stopListening();
                 await syncSpeech("Your answer was " + finalAnswer);
 
-                if (finalAnswer == "5 plus or minus the square root of 13 over 4") {
+                if (finalAnswer == "5 plus or minus the square root of 13 over 2") {
                     await syncSpeech("Good job, that answer is correct.");
                 } else {
                     await syncSpeech("That answer is incorrect.");

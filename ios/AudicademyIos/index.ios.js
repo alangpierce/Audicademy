@@ -69,7 +69,8 @@ var AudicademyIos = React.createClass({
             // Returns a grammar ID. Takes a comma-separate list.
             prepareSpeechList: function(stringList) {
                 return new Promise(function(resolve, reject) {
-                    VoiceInterface.prepareSpeechList(stringList, resolve);
+                    resolve("dummy");
+                    //VoiceInterface.prepareSpeechList(stringList, resolve);
                 });
             },
             startListening: function(grammarId) {
@@ -84,6 +85,14 @@ var AudicademyIos = React.createClass({
             }
         };
 
+        var contentInterface = {
+            loadArticle: function() {
+                return new Promise(function(resolve, reject) {
+                    resolve("Sample article text.");
+                });
+            }
+        };
+
         var buttonInterface = {
             registerButtonDownHandler: function(handler) {
                 window.buttonDownHandlers.push(handler);
@@ -93,7 +102,7 @@ var AudicademyIos = React.createClass({
             }
         };
 
-        window.AudicademyIosTopLevel(speechInterface, buttonInterface);
+        window.AudicademyIosTopLevel(speechInterface, contentInterface, buttonInterface);
 
         return (
             <View style={styles.container}>
