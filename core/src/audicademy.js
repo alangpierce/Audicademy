@@ -106,6 +106,8 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         var textToSpeak = "You are at topic " + topic.title + ". " + formattedTitles.join("");
         var options = _.compact(normalizedTitles);
         options.push("back");
+        options.push("simple exercise");
+        options.push("advanced exercise");
 
         while (true) {
             var answer = null;
@@ -119,6 +121,12 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
             if (answer == "back") {
                 await syncSpeech("Going back.");
                 break;
+            } else if (answer == "simple exercise") {
+                await presentSimpleExercise();
+                continue;
+            } else if (answer == "advanced exercise") {
+                await presentAdvancedExercise();
+                continue;
             }
 
             var answerChild = childrenByNormalizedTitle[answer];
@@ -276,11 +284,12 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         }
     }
 
-    async function presentSampleExercise() {
+    async function presentSimpleExercise() {
+        await syncSpeech("Starting the simple exercise.");
         var numCorrectLeft = 5;
         while (numCorrectLeft > 0) {
             await syncSpeech("" + numCorrectLeft + " problems left.");
-            var result = await sampleProblem();
+            var result = await simpleProblem();
             if (result == "back") {
                 return;
             } else if (result == "correct") {
@@ -293,7 +302,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     }
 
     // Returns "back", "correct", or "incorrect".
-    async function sampleProblem() {
+    async function simpleProblem() {
         var value1 = Math.floor(Math.random() * 8 + 2);
         var value2 = Math.floor(Math.random() * 8 + 2);
 
@@ -328,6 +337,10 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 return "incorrect";
             }
         }
+    }
+
+    async function presentAdvancedExercise() {
+        await syncSpeech("The advanced exercise is under construction.");
     }
 
     topLevel().catch(function(error) {
