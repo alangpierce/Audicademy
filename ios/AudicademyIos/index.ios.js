@@ -42,6 +42,7 @@ var AudicademyIos = React.createClass({
         console.log("the value is " + window.TheValue);
 
         var VoiceInterface = React.NativeModules.VoiceInterface;
+        VoiceInterface.initialize();
 
         var speechInterface = {
             // Returns the utterance ID which can be used later.
@@ -60,18 +61,26 @@ var AudicademyIos = React.createClass({
                     VoiceInterface.stopSpeaking(resolve);
                 });
             },
+
             playYoutubeVideo: function(youtubeId) {
 
             },
-            // Returns a grammard ID. Takes a comma-separate list.
-            prepareSpeechList: function(stringList) {
 
+            // Returns a grammar ID. Takes a comma-separate list.
+            prepareSpeechList: function(stringList) {
+                return new Promise(function(resolve, reject) {
+                    VoiceInterface.prepareSpeechList(stringList, resolve);
+                });
             },
             startListening: function(grammarId) {
-
+                return new Promise(function(resolve, reject) {
+                    VoiceInterface.startListening(grammarId, resolve);
+                });
             },
             stopListening: function() {
-
+                return new Promise(function(resolve, reject) {
+                    VoiceInterface.stopListening(resolve);
+                });
             }
         };
 

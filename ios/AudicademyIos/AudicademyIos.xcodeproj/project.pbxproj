@@ -24,6 +24,11 @@
 		146834051AC3E58100842450 /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		832341BD1AAA6AB300B99B32 /* libRCTText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 832341B51AAA6A8300B99B32 /* libRCTText.a */; };
 		E7EF65F71B6B156200D779F0 /* VoiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = E7EF65F61B6B156200D779F0 /* VoiceInterface.m */; };
+		E7EF66001B6B1FA400D779F0 /* Framework in Resources */ = {isa = PBXBuildFile; fileRef = E7EF65FF1B6B1FA400D779F0 /* Framework */; };
+		E7EF66021B6B200700D779F0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7EF66011B6B200700D779F0 /* AudioToolbox.framework */; };
+		E7EF66041B6B200F00D779F0 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7EF66031B6B200F00D779F0 /* AVFoundation.framework */; };
+		E7EF66061B6B219000D779F0 /* OpenEars.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7EF66051B6B219000D779F0 /* OpenEars.framework */; };
+		E7EF66081B6B219C00D779F0 /* Slt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7EF66071B6B219C00D779F0 /* Slt.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -130,6 +135,11 @@
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
 		E7EF65F61B6B156200D779F0 /* VoiceInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VoiceInterface.m; path = iOS/VoiceInterface.m; sourceTree = "<group>"; };
 		E7EF65F81B6B159E00D779F0 /* VoiceInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VoiceInterface.h; path = iOS/VoiceInterface.h; sourceTree = "<group>"; };
+		E7EF65FF1B6B1FA400D779F0 /* Framework */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Framework; sourceTree = "<group>"; };
+		E7EF66011B6B200700D779F0 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		E7EF66031B6B200F00D779F0 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		E7EF66051B6B219000D779F0 /* OpenEars.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenEars.framework; path = Framework/OpenEars.framework; sourceTree = "<group>"; };
+		E7EF66071B6B219C00D779F0 /* Slt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Slt.framework; path = Framework/Slt.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +154,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E7EF66081B6B219C00D779F0 /* Slt.framework in Frameworks */,
+				E7EF66061B6B219000D779F0 /* OpenEars.framework in Frameworks */,
+				E7EF66041B6B200F00D779F0 /* AVFoundation.framework in Frameworks */,
+				E7EF66021B6B200700D779F0 /* AudioToolbox.framework in Frameworks */,
 				146834051AC3E58100842450 /* libReact.a in Frameworks */,
 				00C302E51ABCBA2D00DB3ED1 /* libRCTActionSheet.a in Frameworks */,
 				00C302E71ABCBA2D00DB3ED1 /* libRCTGeolocation.a in Frameworks */,
@@ -293,6 +307,11 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				E7EF66071B6B219C00D779F0 /* Slt.framework */,
+				E7EF66051B6B219000D779F0 /* OpenEars.framework */,
+				E7EF66031B6B200F00D779F0 /* AVFoundation.framework */,
+				E7EF66011B6B200700D779F0 /* AudioToolbox.framework */,
+				E7EF65FF1B6B1FA400D779F0 /* Framework */,
 				13B07FAE1A68108700A75B9A /* AudicademyIos */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* AudicademyIosTests */,
@@ -516,6 +535,7 @@
 				008F07F31AC5B25A0029DE68 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
+				E7EF66001B6B1FA400D779F0 /* Framework in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -606,6 +626,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Framework",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -625,6 +650,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Framework",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
