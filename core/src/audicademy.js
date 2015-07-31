@@ -108,6 +108,9 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         options.push("back");
         options.push("simple exercise");
         options.push("advanced exercise");
+        for (var i = 1; i <= children.length; i++) {
+            options.push("" + i);
+        }
 
         while (true) {
             var answer = null;
@@ -116,29 +119,33 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
             if (answer == null) {
                 await syncSpeech("Sorry, I didn't understand that.");
                 continue;
-            }
-
-            if (answer == "back") {
+            } else if (answer == "back") {
                 await syncSpeech("Going back.");
                 break;
             } else if (answer == "simple exercise") {
                 await presentSimpleExercise();
-                continue;
             } else if (answer == "advanced exercise") {
                 await presentAdvancedExercise();
-                continue;
-            }
-
-            var answerChild = childrenByNormalizedTitle[answer];
-
-            if (answerChild.kind == "Topic") {
-                await presentTopic(answerChild);
-            } else if (answerChild.kind == "Video") {
-                await presentVideo(answerChild);
-            } else if (answerChild.kind == "Article") {
-                await presentArticle(answerChild);
             } else {
-                console.log("Unexpected child kind: " + answerChild.kind);
+                // Check if answer is a number, use that index if so.
+                // Assume it's the actual title.
+                var answerChild;
+                if (parseInt(answer) == answer) {
+                    var answerIndex = parseInt(answer) - 1;
+                    answerChild = children[answerIndex];
+                } else {
+                    answerChild = childrenByNormalizedTitle[answer];
+                }
+
+                if (answerChild.kind == "Topic") {
+                    await presentTopic(answerChild);
+                } else if (answerChild.kind == "Video") {
+                    await presentVideo(answerChild);
+                } else if (answerChild.kind == "Article") {
+                    await presentArticle(answerChild);
+                } else {
+                    console.log("Unexpected child kind: " + answerChild.kind);
+                }
             }
         }
     }
@@ -400,7 +407,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 await syncSpeech("Your answer was " + finalAnswer);
 
                 if (finalAnswer == "5 plus or minus the square root of 13 over 4") {
-                    await syncSpeech("That answer is correct.");
+                    await syncSpeech("Good job, that answer is correct.");
                 } else {
                     await syncSpeech("That answer is incorrect.");
                 }

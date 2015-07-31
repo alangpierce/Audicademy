@@ -11,6 +11,7 @@ import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 import android.app.Activity;
+import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -58,6 +60,10 @@ public class AudicademyActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audicademy);
         ButterKnife.bind(this);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         mTextToSpeech = new TextToSpeech(this, null);
         mTextToSpeech.setLanguage(Locale.US);
