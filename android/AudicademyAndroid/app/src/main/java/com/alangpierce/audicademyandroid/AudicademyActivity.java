@@ -17,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -46,6 +47,9 @@ public class AudicademyActivity extends Activity {
     private SpeechRecognizer mRecognizer;
     private Track mTrack;
     private MediaRecorder mMediaRecorder;
+
+    // True if the the headset button is "logically" held down. Pressing the button toggles it.
+    private boolean headsetButtonHeldDown = false;
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
@@ -88,20 +92,10 @@ public class AudicademyActivity extends Activity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        mWebView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mWebView.evaluateJavascript("handleSpeakButtonDown()", null);
-                            }
-                        });
+                        buttonDown();
                         break;
                     case MotionEvent.ACTION_UP:
-                        mWebView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mWebView.evaluateJavascript("handleSpeakButtonUp()", null);
-                            }
-                        });
+                        buttonUp();
                         break;
                 }
                 return true;
@@ -131,6 +125,35 @@ public class AudicademyActivity extends Activity {
         mTrack = new Track(this);
 
         mMediaRecorder = new MediaRecorder();
+    }
+
+    private void buttonDown() {
+        mWebView.post(new Runnable() {
+            @Override
+            public void run() {
+                mWebView.evaluateJavascript("handleSpeakButtonDown()", null);
+            }
+        });
+    }
+
+    private void buttonUp() {
+        mWebView.post(new Runnable() {
+            @Override
+            public void run() {
+                mWebView.evaluateJavascript("handleSpeakButtonUp()", null);
+            }
+        });
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (!headsetButtonHeldDown) {
+            buttonDown();
+        } else {
+            buttonUp();
+        }
+        headsetButtonHeldDown = !headsetButtonHeldDown;
+        return true;
     }
 
     public class AudicademyInterface {
