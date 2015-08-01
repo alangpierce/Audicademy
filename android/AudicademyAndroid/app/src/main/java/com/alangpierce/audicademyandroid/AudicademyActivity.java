@@ -57,6 +57,8 @@ public class AudicademyActivity extends Activity {
     private Map<String, JsCallback<Void>> mUtteranceCompletionCallbacks = new HashMap<>();
     private Set<String> mCompletedUtterances = new HashSet<>();
 
+    private float mPlaybackSpeed = 1.5f;
+
     private static final String DIGITS_SEARCH = "digits";
 
     @Override
@@ -185,6 +187,7 @@ public class AudicademyActivity extends Activity {
             mTrack = new Track(AudicademyActivity.this);
             mTrack.setDataSourceString(
                     "file:///sdcard/KhanAcademyData/videos/" + youtubeId + "/" + youtubeId + ".ts");
+            mTrack.setPlaybackSpeed(mPlaybackSpeed);
             mTrack.prepare();
             mTrack.start();
             callback.respond(null);

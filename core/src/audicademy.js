@@ -13,7 +13,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         await presentTopic(topicsById["x00000000"]);
         //await presentTopic(topicsById["x20488a2b"]);
         //await presentVideo(videosById["878129397"]);
-        //await presentArticle(articlesById["x64ef5293"]);
+        //await presentArticle(articlesById["xbdcfe503"]);
         //await presentSampleExercise();
     }
 
@@ -120,7 +120,6 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
             answer = await speakMenuAndWaitForInput(textToSpeak, options);
             if (answer == null) {
                 await syncSpeech("Sorry, I didn't understand that.");
-                continue;
             } else if (answer == "back") {
                 await syncSpeech("Going back.");
                 break;
@@ -203,6 +202,9 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
             .replace(/&lsquo;/g, "'")
             .replace(/&nbsp;/g, " ")
             .replace(/&mdash;/g, " - ")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, "&")
             .split(".");
         for (var i = 0; i < articleSentences.length; i++) {
             var utteranceId = await speechInterface.speak(articleSentences[i]);
