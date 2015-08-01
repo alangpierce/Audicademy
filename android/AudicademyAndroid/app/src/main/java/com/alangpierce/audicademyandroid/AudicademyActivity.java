@@ -147,13 +147,16 @@ public class AudicademyActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (!headsetButtonHeldDown) {
-            buttonDown();
-        } else {
-            buttonUp();
+        if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK) {
+            if (!headsetButtonHeldDown) {
+                buttonDown();
+            } else {
+                buttonUp();
+            }
+            headsetButtonHeldDown = !headsetButtonHeldDown;
+            return true;
         }
-        headsetButtonHeldDown = !headsetButtonHeldDown;
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 
     public class AudicademyInterface {
