@@ -131,7 +131,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 // Check if answer is a number, use that index if so.
                 // Assume it's the actual title.
                 var answerChild;
-                if (parseInt(answer) == answer) {
+                if (!isNaN(parseInt(answer))) {
                     var answerIndex = parseInt(answer) - 1;
                     answerChild = children[answerIndex];
                 } else {

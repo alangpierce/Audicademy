@@ -5,6 +5,8 @@ declare class SpeechInterface {
     stopSpeaking(): Promise<void>;
 
     playYoutubeVideo(youtubeId: string): Promise<string>;
+    pauseYoutubeVideo(): Promise<string>;
+    resumeYoutubeVideo(): Promise<string>;
     loadArticle(articleId: string): Promise<string>;
 
     // Returns a grammar ID. Takes a comma-separate list.
@@ -19,13 +21,11 @@ declare class SpeechInterface {
     stopUserVoice(): Promise<void>;
 }
 
-
 declare class ContentInterface {
-    loadArticle(articleId: string) => Promise<string>;
+    loadArticle(articleId: string): Promise<string>;
 }
 
-
 declare class ButtonInterface {
-    registerButtonDownHandler(callback: () => void);
-    registerButtonUpHandler(callback: () => void);
+    registerButtonDownHandler(callback: () => void): void;
+    registerButtonUpHandler(callback: () => void): void;
 }

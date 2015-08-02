@@ -23,13 +23,13 @@ function init(buttonInterface: ButtonInterface) {
     });
 }
 
-function waitForButtonDown() {
+function waitForButtonDown(): Promise<void> {
     return new Promise(function(resolve, reject) {
         buttonDownResolveFuncs.push(resolve);
     });
 }
 
-function waitForButtonUp() {
+function waitForButtonUp(): Promise<void> {
     return new Promise(function(resolve, reject) {
         buttonUpResolveFuncs.push(resolve);
     });
