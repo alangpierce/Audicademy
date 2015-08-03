@@ -5,6 +5,7 @@ declare class SpeechInterface {
     stopSpeaking(): Promise<void>;
 
     playYoutubeVideo(youtubeId: string): Promise<string>;
+    setYoutubePlaybackSpeed(playbackSpeed: number): Promise<void>;
     pauseYoutubeVideo(): Promise<string>;
     resumeYoutubeVideo(): Promise<string>;
 
@@ -12,6 +13,9 @@ declare class SpeechInterface {
     prepareSpeechList(stringList: string): Promise<string>;
     startListening(grammarId: string): Promise<void>;
     stopListening(): Promise<string>;
+
+    startListeningFreeForm(): Promise<void>;
+    stopListeningFreeForm(): Promise<string>;
 
     // Returns a note ID.
     recordUserVoice(): Promise<string>;
@@ -22,6 +26,7 @@ declare class SpeechInterface {
 
 declare class ContentInterface {
     loadArticle(articleId: string): Promise<string>;
+    performSearch(query: string): Promise<any>;
 }
 
 declare class ButtonInterface {

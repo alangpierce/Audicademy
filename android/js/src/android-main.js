@@ -1,5 +1,6 @@
 /* @flow */
 
+var $ = require("jquery");
 var _ = require("underscore");
 
 // Run some side-effects to expose some global functions for the Android bridge.
@@ -26,6 +27,12 @@ function runAudicademyTopLevel() {
                 var script = document.createElement('script');
                 script.src = 'file:///sdcard/KhanAcademyData/articles/' + articleId + '.js';
                 document.head.appendChild(script);
+            });
+        },
+        performSearch: function(query: string) {
+            return $.get("http://www.khanacademy.org/api/internal/search/query", {
+                q: query,
+                content_kinds: "Video,Article"
             });
         }
     };

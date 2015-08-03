@@ -74,22 +74,25 @@ function runAudicademyTopLevel() {
                 }
             });
         },
-        stopSpeaking(): Promise<void> {
+        stopSpeaking: function(): Promise<void> {
             window.speechSynthesis.cancel();
             return new Promise(function(resolve, reject) {
                 resolve();
             });
         },
 
-        playYoutubeVideo(youtubeId: string): Promise<string> {
+        playYoutubeVideo: function(youtubeId: string): Promise<string> {
             // Since autoplay is on, this will start playing immediately.
             var url = "http://fastly.kastatic.org/KA-youtube-converted/" + youtubeId + ".mp4/" + youtubeId + ".mp4";
             $("#audio_player").attr("src", url);
         },
-        pauseYoutubeVideo(youtubeId: string): Promise<string> {
+        setYoutubePlaybackSpeed: function(playbackSpeed: number): Promise<void> {
+            // TODO
+        },
+        pauseYoutubeVideo: function(youtubeId: string): Promise<string> {
             $("#audio_player")[0].pause()
         },
-        resumeYoutubeVideo(youtubeId: string): Promise<string> {
+        resumeYoutubeVideo: function(youtubeId: string): Promise<string> {
             $("#audio_player")[0].play()
         },
 

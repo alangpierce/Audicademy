@@ -15,6 +15,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         //await presentVideo(videosById["878129397"]);
         //await presentArticle(articlesById["xbdcfe503"]);
         //await presentSampleExercise();
+        //await presentSearch();
     }
 
     function sleep(timeMs: number) {
@@ -109,6 +110,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         options.push("back");
         options.push("simple exercise");
         options.push("advanced exercise");
+        options.push("search");
         for (var i = 1; i <= children.length; i++) {
             options.push("" + i);
         }
@@ -127,6 +129,8 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 await presentSimpleExercise();
             } else if (answer == "advanced exercise") {
                 await presentAdvancedExercise();
+            } else if (answer == "search") {
+                await presentSearch();
             } else {
                 // Check if answer is a number, use that index if so.
                 // Assume it's the actual title.
@@ -152,7 +156,8 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     }
 
     async function presentVideo(video) {
-        var activeGrammarId = await speechInterface.prepareSpeechList("pause,back");
+        var activeGrammarId = await speechInterface.prepareSpeechList(
+            "pause,back,set playback speed to one x,set playback speed to one point five x,set playback speed to two x");
         var pausedGrammarId = await speechInterface.prepareSpeechList("resume,back");
         await syncSpeech("Playing video " + video.title);
         await speechInterface.playYoutubeVideo(video.youtubeId);
@@ -185,6 +190,18 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 } else if (activeResult == "back") {
                     await syncSpeech("Going back.");
                     return;
+                } else if (activeResult == "set playback speed to one x") {
+                    await syncSpeech("Ok, setting playback speed to one x.");
+                    await speechInterface.setYoutubePlaybackSpeed(1.0);
+                    await speechInterface.resumeYoutubeVideo();
+                } else if (activeResult == "set playback speed to one point five x") {
+                    await syncSpeech("Ok, setting playback speed to one point five x.");
+                    await speechInterface.setYoutubePlaybackSpeed(1.5);
+                    await speechInterface.resumeYoutubeVideo();
+                } else if (activeResult == "set playback speed to two x") {
+                    await syncSpeech("Ok, setting playback speed to two x.");
+                    await speechInterface.setYoutubePlaybackSpeed(2.0);
+                    await speechInterface.resumeYoutubeVideo();
                 } else {
                     await syncSpeech("Sorry, I didn't understand that.");
                     await speechInterface.resumeYoutubeVideo();
@@ -194,18 +211,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
     }
 
     async function speakArticle(articleText: string, controls) {
-        var articleSentences = articleText
-            .replace(/<[^>]*>/g, " ")
-            .replace(/&ldquo;/g, "'")
-            .replace(/&rdquo;/g, "'")
-            .replace(/&rsquo;/g, "'")
-            .replace(/&lsquo;/g, "'")
-            .replace(/&nbsp;/g, " ")
-            .replace(/&mdash;/g, " - ")
-            .replace(/&quot;/g, "\"")
-            .replace(/&#39;/g, "'")
-            .replace(/&amp;/g, "&")
-            .split(".");
+        var articleSentences = stripHtml(articleText).split(".");
         for (var i = 0; i < articleSentences.length; i++) {
             var utteranceId = await speechInterface.speak(articleSentences[i]);
             var speechPromise = speechInterface.waitForEndOfSpeech(utteranceId);
@@ -220,6 +226,19 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 }
             }
         }
+    }
+
+    function stripHtml(html) {
+        return html.replace(/<[^>]*>/g, " ")
+            .replace(/&ldquo;/g, "'")
+            .replace(/&rdquo;/g, "'")
+            .replace(/&rsquo;/g, "'")
+            .replace(/&lsquo;/g, "'")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&mdash;/g, " - ")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, "&");
     }
 
     async function waitForArticleResume(controls) {
@@ -383,7 +402,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
 
         while (true) {
             // Answer: x = (5 \pm sqrt(13)) / (4)
-            await buttonManager.waitForButtonDown();
+            await buttonManager.waitForButtonDtown();
             await speechInterface.startListening(grammarId);
             await speechInterface.stopSpeaking();
             await buttonManager.waitForButtonUp();
@@ -428,6 +447,54 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 }
             }
         }
+    }
+
+    async function presentSearch() {
+        await syncSpeech("What would you like to search for?");
+        await buttonManager.waitForButtonDown();
+        await speechInterface.startListeningFreeForm();
+        await speechInterface.stopSpeaking();
+        await buttonManager.waitForButtonUp();
+        var searchQuery = await speechInterface.stopListeningFreeForm();
+        await syncSpeech("Searching for " + searchQuery);
+        var searchResults = await contentInterface.performSearch(searchQuery);
+
+        var formattedTitles = _.map(searchResults.results, function(searchResult, i) {
+            return "" + (i + 1) + searchResult.kind + ". " + stripHtml(searchResult.title) + ". ";
+        });
+
+        var textToSpeak = "Here are the top results for " + searchQuery + ". " +
+            formattedTitles.join("");
+        var options = ["back"];
+        for (var i = 1; i <= searchResults.results.length; i++) {
+            options.push("" + i);
+        }
+
+        while (true) {
+            var answer = null;
+
+            answer = await speakMenuAndWaitForInput(textToSpeak, options);
+            if (answer == null) {
+                await syncSpeech("Sorry, I didn't understand that.");
+            } else if (answer == "back") {
+                await syncSpeech("Going back.");
+                break;
+            } else {
+                var resultIndex = parseInt(answer) - 1;
+                var searchResult = searchResults.results[resultIndex];
+                var kind = searchResult.kind;
+                var id = searchResult.id.split(":")[1];
+
+                if (kind == "Video") {
+                    await presentVideo(videosById[id]);
+                } else if (kind == "Article") {
+                    await presentArticle(articlesById[id]);
+                } else {
+                    console.log("Unexpected search result kind: " + kind);
+                }
+            }
+        }
+
     }
 
     topLevel().catch(function(error) {

@@ -2,6 +2,7 @@ package com.alangpierce.audicademyandroid;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import com.alangpierce.audicademyandroid.FreeFormRecognitionListener.ResultHandler;
 import com.falconware.prestissimo.Track;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -11,10 +12,12 @@ import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.view.KeyEvent;
@@ -45,6 +48,7 @@ public class AudicademyActivity extends Activity {
 
     private TextToSpeech mTextToSpeech;
     private SpeechRecognizer mRecognizer;
+    private android.speech.SpeechRecognizer mFreeFormRecognizer;
     private Track mTrack;
     private MediaRecorder mMediaRecorder;
 
@@ -53,11 +57,12 @@ public class AudicademyActivity extends Activity {
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
+    private volatile JsCallback<String> mFreeFormSpeechCompletionCallback;
 
     private Map<String, JsCallback<Void>> mUtteranceCompletionCallbacks = new HashMap<>();
     private Set<String> mCompletedUtterances = new HashSet<>();
 
-    private float mPlaybackSpeed = 1.5f;
+    private float mPlaybackSpeed = 1.0f;
 
     private static final String DIGITS_SEARCH = "digits";
 
@@ -127,6 +132,14 @@ public class AudicademyActivity extends Activity {
         mTrack = new Track(this);
 
         mMediaRecorder = new MediaRecorder();
+
+        mFreeFormRecognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(this);
+        mFreeFormRecognizer.setRecognitionListener(new FreeFormRecognitionListener(new ResultHandler() {
+            @Override
+            public void handleResult(String result) {
+                mFreeFormSpeechCompletionCallback.respond(result);
+            }
+        }));
     }
 
     private void buttonDown() {
@@ -193,6 +206,12 @@ public class AudicademyActivity extends Activity {
             callback.respond(null);
         }
 
+        public void setYoutubePlaybackSpeed(double playbackSpeed, JsCallback<Void> callback) {
+            mPlaybackSpeed = (float) playbackSpeed;
+            mTrack.setPlaybackSpeed((float) playbackSpeed);
+            callback.respond(null);
+        }
+
         public void pauseYoutubeVideo(JsCallback<Void> callback) {
             mTrack.pause();
             callback.respond(null);
@@ -217,6 +236,30 @@ public class AudicademyActivity extends Activity {
             mRecognizer.stop();
         }
 
+        public void startListeningFreeForm(JsCallback<Void> callback) {
+            final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                    AudicademyActivity.this.getPackageName());
+            mWebView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mFreeFormRecognizer.startListening(intent);
+                }
+            });
+            callback.respond(null);
+        }
+        public void stopListeningFreeForm(JsCallback<String> callback) {
+            mFreeFormSpeechCompletionCallback = callback;
+            mWebView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mFreeFormRecognizer.stopListening();
+                }
+            });
+        }
+
         // Starts recording the user's voice.
         public void recordUserVoice(JsCallback<String> callback) {
             String noteId = randomId();
@@ -238,6 +281,7 @@ public class AudicademyActivity extends Activity {
             callback.respond(null);
         }
         public void playBackUserVoice(String noteId, JsCallback<Void> callback) {
+
             mTrack = new Track(AudicademyActivity.this);
             mTrack.setDataSourceString(pathForNoteFile(noteId));
             mTrack.prepare();
@@ -310,13 +354,13 @@ public class AudicademyActivity extends Activity {
 
         mRecognizer.addListener(new AudicademyRecognitionListener(
                 new AudicademyRecognitionListener.ResultHandler() {
-            @Override
-            public void handleResult(String result) {
-                if (mSpeechCompletionCallback != null) {
-                    mSpeechCompletionCallback.respond(result);
-                }
-            }
-        }));
+                    @Override
+                    public void handleResult(String result) {
+                        if (mSpeechCompletionCallback != null) {
+                            mSpeechCompletionCallback.respond(result);
+                        }
+                    }
+                }));
 
         // Create grammar-based search for digit recognition
         File digitsGrammar = new File(assetsDir, "digits.gram");
