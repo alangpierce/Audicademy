@@ -57,7 +57,9 @@ public class AudicademyActivity extends Activity {
 
     // If not null, this callback is the the one to actually use when the user finishes speaking.
     private volatile JsCallback<String> mSpeechCompletionCallback;
+
     private volatile JsCallback<String> mFreeFormSpeechCompletionCallback;
+    private volatile String mPendingFreeFormResult;
 
     private Map<String, JsCallback<Void>> mUtteranceCompletionCallbacks = new HashMap<>();
     private Set<String> mCompletedUtterances = new HashSet<>();
@@ -137,7 +139,11 @@ public class AudicademyActivity extends Activity {
         mFreeFormRecognizer.setRecognitionListener(new FreeFormRecognitionListener(new ResultHandler() {
             @Override
             public void handleResult(String result) {
-                mFreeFormSpeechCompletionCallback.respond(result);
+                if (mFreeFormSpeechCompletionCallback != null) {
+                    mFreeFormSpeechCompletionCallback.respond(result);
+                } else {
+                    mPendingFreeFormResult = result;
+                }
             }
         }));
     }
@@ -251,7 +257,13 @@ public class AudicademyActivity extends Activity {
             callback.respond(null);
         }
         public void stopListeningFreeForm(JsCallback<String> callback) {
-            mFreeFormSpeechCompletionCallback = callback;
+            if (mPendingFreeFormResult != null) {
+                String result = mPendingFreeFormResult;
+                mPendingFreeFormResult = null;
+                callback.respond(result);
+            } else {
+                mFreeFormSpeechCompletionCallback = callback;
+            }
             mWebView.post(new Runnable() {
                 @Override
                 public void run() {
