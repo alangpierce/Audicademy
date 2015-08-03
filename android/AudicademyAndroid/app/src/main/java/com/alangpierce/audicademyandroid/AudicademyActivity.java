@@ -379,6 +379,8 @@ public class AudicademyActivity extends Activity {
         mRecognizer.addGrammarSearch(DIGITS_SEARCH, digitsGrammar);
         File quadraticFormulaGrammar = new File(assetsDir, "quadratic_formula_grammar.gram");
         mRecognizer.addGrammarSearch("quadratic_formula_grammar", quadraticFormulaGrammar);
+        File factoringGrammar = new File(assetsDir, "factoring_grammar.gram");
+        mRecognizer.addGrammarSearch("factoring_grammar", factoringGrammar);
     }
 
     private String randomId() {

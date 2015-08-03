@@ -15,6 +15,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         //await presentVideo(videosById["878129397"]);
         //await presentArticle(articlesById["xbdcfe503"]);
         //await presentSampleExercise();
+        //await presentFactoringExercise();
         //await presentSearch();
     }
 
@@ -110,6 +111,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
         options.push("back");
         options.push("simple exercise");
         options.push("advanced exercise");
+        options.push("factoring exercise");
         options.push("search");
         for (var i = 1; i <= children.length; i++) {
             options.push("" + i);
@@ -127,6 +129,8 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 break;
             } else if (answer == "simple exercise") {
                 await presentSimpleExercise();
+            } else if (answer == "factoring exercise") {
+                await presentFactoringExercise();
             } else if (answer == "advanced exercise") {
                 await presentAdvancedExercise();
             } else if (answer == "search") {
@@ -402,7 +406,7 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
 
         while (true) {
             // Answer: x = (5 \pm sqrt(13)) / (4)
-            await buttonManager.waitForButtonDtown();
+            await buttonManager.waitForButtonDown();
             await speechInterface.startListening(grammarId);
             await speechInterface.stopSpeaking();
             await buttonManager.waitForButtonUp();
@@ -445,6 +449,93 @@ function topLevel(speechInterface: SpeechInterface, contentInterface: ContentInt
                 } else {
                     await syncSpeech("That answer is incorrect.");
                 }
+            }
+        }
+    }
+
+    async function presentFactoringExercise() {
+        await syncSpeech("Starting the factoring exercise.");
+        while (true) {
+            var result = await presentFactoringProblem();
+            if (result == "back") {
+                return;
+            }
+        }
+    }
+
+    async function presentFactoringProblem() {
+        var value1 = Math.floor(Math.random() * 8 - 4);
+        if (value1 == 0) {
+            value1 = 4;
+        }
+
+        var value2 = Math.floor(Math.random() * 8 - 4);
+        if (value2 == 0) {
+            value2 = 4;
+        }
+
+        console.log("Values are " + value1 + " and " + value2);
+
+        var question = "Factor x squared ";
+
+        if (value1+value2 > 0) {
+            question += "plus " + (value1+value2) + " x ";
+        } else {
+            question += "minus " + Math.abs(value1+value2) + " x ";
+        }
+        if (value1*value2 > 0) {
+            question += "plus " + (value1*value2) + ".";
+        } else {
+            question += "minus " + Math.abs(value1*value2) + ".";
+        }
+
+        while (true) {
+            await speechInterface.speak(question);
+            await buttonManager.waitForButtonDown();
+            await speechInterface.startListening("factoring_grammar");
+            await speechInterface.stopSpeaking();
+            await buttonManager.waitForButtonUp();
+            var result = await speechInterface.stopListening();
+
+            if (result == null) {
+                syncSpeech("Sorry, I didn't understand that.");
+                continue;
+            }
+            if (result == "back") {
+                syncSpeech("Going back.");
+                return "back";
+            } else if (result == "repeat the question") {
+                continue;
+            }
+
+            await syncSpeech("Checking answer " + result);
+            var buttonPromise = buttonManager.waitForButtonDown().then(function(){ return "pressed"; });
+            var sleepPromise = sleep(1500);
+            var pauseResult = await Promise.race([sleepPromise, buttonPromise]);
+            if (pauseResult == "pressed") {
+                await buttonManager.waitForButtonUp();
+                await syncSpeech("Ok, I'll forget about that answer.");
+                continue;
+            }
+
+            var components = result.split(" ");
+            var operationOne = components[1];
+            var numOne = components[2];
+            var operationTwo = components[5];
+            var numTwo = components[6];
+
+            var answerNumOne = parseInt(numOne) * (operationOne == "plus" ? 1 : -1);
+            var answerNumTwo = parseInt(numTwo) * (operationTwo == "plus" ? 1 : -1);
+
+            console.log("answerNumOne is " + answerNumOne + " and answerNumTwo is " + answerNumTwo);
+
+            if ((answerNumOne == value1 && answerNumTwo == value2) ||
+                (answerNumOne == value2 && answerNumTwo == value1)) {
+                await syncSpeech("" + result + " is correct!");
+                return "correct";
+            } else {
+                await syncSpeech("Sorry, " + result + " is incorrect.");
+                return "incorrect";
             }
         }
     }

@@ -9,6 +9,7 @@ en-us-ptm/noisedict
 en-us-ptm/sendump
 en-us-ptm/transition_matrices
 en-us-ptm/variances
+factoring_grammar.gram
 menu.gram
 quadratic_formula_grammar.gram
 weather.dmp
