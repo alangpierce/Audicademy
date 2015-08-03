@@ -7,7 +7,6 @@ declare class SpeechInterface {
     playYoutubeVideo(youtubeId: string): Promise<string>;
     pauseYoutubeVideo(): Promise<string>;
     resumeYoutubeVideo(): Promise<string>;
-    loadArticle(articleId: string): Promise<string>;
 
     // Returns a grammar ID. Takes a comma-separate list.
     prepareSpeechList(stringList: string): Promise<string>;
