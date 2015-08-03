@@ -1,0 +1,13 @@
+# Use App Engine for the HTTPS, which is needed for Chrome speech recognition.
+application: audicademy
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /
+  static_files: static/index.html
+  upload: static/index.html
+- url: /build
+  static_dir: static/build

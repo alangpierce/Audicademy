@@ -1,4 +1,8 @@
 var $ = require("jquery");
+var _ = require("underscore");
+
+var levenshtein = require('levenshtein-edit-distance');
+
 var audicademyTopLevel = require("../../../core/src/audicademy.js");
 
 function randomId() {
@@ -6,8 +10,42 @@ function randomId() {
     return Math.random().toString(36).slice(2);
 }
 
-var COMPLETED_UTTERANCES = {};
-var UTTERANCE_COMPLETION_CALLBACKS = {};
+var completedUtterances = {};
+var utteranceCompletionCallbacks = {};
+
+var grammars = {};
+var activeGrammar = null;
+var nextSpeechResultCallback = null;
+
+var recognition = new webkitSpeechRecognition();
+
+recognition.onresult = function(result) {
+    var resultText = result.results[0][0].transcript;
+    console.log("Got speech result " + resultText);
+    if (nextSpeechResultCallback) {
+        var grammar = grammars[activeGrammar];
+        activeGrammar = null;
+
+        var bestWord = null;
+        var bestScore = Number.POSITIVE_INFINITY;
+        _.each(grammar, function(word) {
+            var score = levenshtein(word, resultText);
+            if (score < bestScore) {
+                bestScore = score;
+                bestWord = word;
+            }
+        });
+        console.log("Matched word " + bestWord);
+        nextSpeechResultCallback(bestWord);
+    }
+};
+
+recognition.onend = function() {
+    if (nextSpeechResultCallback) {
+        nextSpeechResultCallback(null);
+    }
+};
+
 
 function runAudicademyTopLevel() {
     var speechInterface = {
@@ -16,10 +54,10 @@ function runAudicademyTopLevel() {
             var msg = new SpeechSynthesisUtterance(text);
             var utteranceId = randomId();
             msg.onend = function() {
-                if (UTTERANCE_COMPLETION_CALLBACKS[utteranceId]) {
-                    UTTERANCE_COMPLETION_CALLBACKS[utteranceId]();
+                if (utteranceCompletionCallbacks[utteranceId]) {
+                    utteranceCompletionCallbacks[utteranceId]();
                 } else {
-                    COMPLETED_UTTERANCES[utteranceId] = true;
+                    completedUtterances[utteranceId] = true;
                 }
             };
             window.speechSynthesis.speak(msg);
@@ -29,10 +67,10 @@ function runAudicademyTopLevel() {
         },
         waitForEndOfSpeech: function(utteranceId: string): Promise<void> {
             return new Promise(function(resolve, reject) {
-                if (COMPLETED_UTTERANCES[utteranceId]) {
+                if (completedUtterances[utteranceId]) {
                     resolve();
                 } else {
-                    UTTERANCE_COMPLETION_CALLBACKS[utteranceId] = resolve;
+                    utteranceCompletionCallbacks[utteranceId] = resolve;
                 }
             });
         },
@@ -56,13 +94,21 @@ function runAudicademyTopLevel() {
         },
 
         prepareSpeechList: function(stringList: string): Promise<string> {
-            // TODO
+            var grammarId = randomId();
+            grammars[grammarId] = stringList.split(",");
+            return new Promise(function(resolve, reject) {
+                resolve(grammarId);
+            });
         },
         startListening: function(grammarId: string): Promise<void> {
-            // TODO
+            activeGrammar = grammarId;
+            recognition.start();
         },
         stopListening: function(): Promise<string> {
-            // TODO
+            return new Promise(function(resolve, reject) {
+                nextSpeechResultCallback = resolve;
+                recognition.stop();
+            });
         }
     };
     var contentInterface = {

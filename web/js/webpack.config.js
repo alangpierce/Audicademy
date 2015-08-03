@@ -1,7 +1,7 @@
 module.exports = {
     entry: "./src/web-main.js",
     output: {
-        path: __dirname + "/../build",
+        path: __dirname + "/../app/static/build",
         filename: "audicademy-web-bundle.js"
     },
     module: {
